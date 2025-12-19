@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Challenge</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #1a1a2e; color: #fff; padding: 40px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 700px; background: #16213e; padding: 30px; border-radius: 15px; border: 1px solid #0f3460; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #0f3460; background: #0f3460; color: white; border-radius: 4px; }
+        .query-preview { background: #000; color: #00ff00; padding: 15px; border-radius: 5px; font-family: 'Courier New', monospace; margin-top: 20px; border-left: 4px solid #e94560; }
+        .commented { color: #666; text-decoration: line-through; opacity: 0.6; }
+        .injected { color: #ff9900; font-weight: bold; }
+        .status { margin-top: 20px; padding: 15px; border-radius: 5px; font-weight: bold; text-align: center; display: none; }
+        .success { background: #1b4332; color: #8efda1; display: block; border: 1px solid #2d6a4f; }
+        .fail { background: #5a1212; color: #ff9999; display: block; border: 1px solid #800000; }
+        button { width: 100%; padding: 12px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Login Challenge</h2>
+    
+    <label>Username</label>
+    <input type="text" id="username" oninput="renderSQL()" placeholder="Enter username...">
+    
+    <label>Password</label>
+    <input type="text" id="password" oninput="renderSQL()" placeholder="Enter password...">
+    
+    <button onclick="checkLogin()">SUBMIT QUERY</button>
+
+
+    <div id="resultStatus" class="status"></div>
+</div>
+
+<script>
+    function renderSQL() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        
+        let uDisplay = u;
+        let pClass = "";
+
+        // Visual simulation of the -- comment effect
+        if (u.includes("--")) {
+            const parts = u.split("--");
+            // Highlight ' OR 1=1 if present
+            let mainPart = parts[0].replace(/' OR 1=1/gi, "<span class='injected'>' OR 1=1</span>");
+            uDisplay = mainPart + "<span class='commented'>--" + parts.slice(1).join("--") + "</span>";
+            pClass = "commented";
+        }
+
+        document.getElementById('uOut').innerHTML = uDisplay;
+        document.getElementById('pOut').className = pClass;
+        document.getElementById('pOut').innerText = p;
+    }
+
+    function checkLogin() {
+        const u = document.getElementById('username').value.toLowerCase();
+        const status = document.getElementById('resultStatus');
+        
+        // Logical check for both common SQLi patterns
+        const isCommentBypass = u.startsWith("eli239123' --");
+        const isTautologyBypass = u.includes("' or 1=1");
+        const hasComment = u.includes("--");
+
+        if ((isCommentBypass) || (isTautologyBypass && hasComment)) {
+            status.innerText = "SUCCESS: Authentication bypassed via SQL Injection!";
+            status.className = "status success";
+        } else {
+            status.innerText = "FAILURE: Invalid credentials or incorrect SQL syntax.";
+            status.className = "status fail";
+        }
+    }
+</script>
+
+</body>
+</html>
+
